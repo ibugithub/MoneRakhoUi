@@ -1,12 +1,14 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import axios from 'axios';
 import { AxiosReqInstance } from '../accounts/utils/axiosInstance';
 import { ProfileInterface } from '@/types/interface';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export const Profile = () => {
-  const protectedRoute = AxiosReqInstance();
+  const protectedRoute = useMemo(() => AxiosReqInstance(), []);
   const [profile, setProfile] = useState<ProfileInterface | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
@@ -27,7 +29,7 @@ export const Profile = () => {
       }
     };
     fetchProfile();
-  }, []);
+  }, [protectedRoute]);
 
   const handleChangePassword = async () => {
     setLoading(true);
@@ -43,8 +45,11 @@ export const Profile = () => {
       setOldPassword('');
       setNewPassword('');
       setShowPasswordForm(false);
-    } catch (error: any) {
-      setMessage(error.response?.data?.message || 'Failed to change password');
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setMessage(errorMessage || 'Failed to change password');
     } finally {
       setLoading(false);
     }
@@ -61,10 +66,12 @@ export const Profile = () => {
         {/* Profile Content */}
         <div className="p-8 flex flex-col items-center space-y-6">
           {profile?.profile_picture && (
-            <img
+            <Image
               src={profile.profile_picture}
               alt="Profile"
-              className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+              width={128}
+              height={128}
+              className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
             />
           )}
 
